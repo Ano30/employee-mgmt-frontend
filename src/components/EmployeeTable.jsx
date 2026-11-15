@@ -19,7 +19,7 @@ export default function EmployeeTable({ employees, onPasswordChange }) {
 
   return (
     <div className="card">
-      <h3 style={{ color: "var(--navy-blue)" }}>Employee Directory</h3>
+      <h3 style={{ color: "var(--navy-blue)" }}>Company Directory</h3>
       
       {employees.length === 0 ? (
         <p>No employees found.</p>
@@ -37,13 +37,13 @@ export default function EmployeeTable({ employees, onPasswordChange }) {
           </thead>
           <tbody>
             {employees.map((emp) => {
-              const isOnLeave = emp.leaves.length > 0;
-              const latestClock = emp.attendance[0];
+              const isOnLeave = emp.isOnLeave;
+              const latestClock = emp.latestClock;
               
               return (
-                <tr key={emp.id} style={{ borderBottom: "1px solid #eee" }}>
-                  <td style={{ padding: "10px", fontWeight: "bold" }}>{emp.user.fullName}</td>
-                  <td style={{ padding: "10px" }}>{emp.user.role.toUpperCase()}</td>
+                <tr key={emp.userId} style={{ borderBottom: "1px solid #eee" }}>
+                  <td style={{ padding: "10px", fontWeight: "bold" }}>{emp.name}</td>
+                  <td style={{ padding: "10px" }}>{emp.role.toUpperCase()}</td>
                   <td style={{ padding: "10px", fontWeight: "bold", color: isOnLeave ? "orange" : "var(--green)" }}>
                     {isOnLeave ? "ON LEAVE" : "ACTIVE"}
                   </td>
