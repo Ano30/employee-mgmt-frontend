@@ -7,6 +7,7 @@ export default function Director() {
   const [employees, setEmployees] = useState([]);
   const [form, setForm] = useState({ fullName: "", email: "", password: "", role: "hr" });
   const [message, setMessage] = useState("");
+  const [showForm, setShowForm] = useState(false); // NEW: Toggle state
   const navigate = useNavigate();
   
   const token = localStorage.getItem("token");
@@ -38,6 +39,7 @@ export default function Director() {
       setMessage("User created successfully!");
       setForm({ fullName: "", email: "", password: "", role: "hr" });
       fetchEmployees();
+      setShowForm(false); // Hide form after success
     } catch (err) {
       setMessage(err.response?.data?.error || "Failed to create user");
     }
@@ -59,10 +61,17 @@ export default function Director() {
 
       {message && <p style={{ color: message.includes("success") ? "var(--green)" : "red", fontWeight: "bold" }}>{message}</p>}
 
-      <div style={{ display: "flex", gap: "20px", marginBottom: "20px" }}>
-        <div className="card" style={{ flex: 1 }}>
-          <h3 style={{ color: "var(--navy-blue)" }}>Create HR Account</h3>
-          <form onSubmit={handleCreateUser} style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
+        <h3 style={{ color: "var(--navy-blue)", margin: 0 }}>Employee Directory</h3>
+        <button onClick={() => setShowForm(!showForm)} className="btn-primary">
+          {showForm ? "Close Form" : "+ Create User"}
+        </button>
+      </div>
+
+      {showForm && (
+        <div className="card" style={{ marginBottom: "20px" }}>
+          <h3 style={{ color: "var(--navy-blue)" }}>Create HR or Supervisor Account</h3>
+          <form onSubmit={handleCreateUser} style={{ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "500px" }}>
             <input type="text" placeholder="Full Name" value={form.fullName} onChange={(e) => setForm({...form, fullName: e.target.value})} required />
             <input type="email" placeholder="Email" value={form.email} onChange={(e) => setForm({...form, email: e.target.value})} required />
             <input type="password" placeholder="Password" value={form.password} onChange={(e) => setForm({...form, password: e.target.value})} required />
@@ -73,7 +82,7 @@ export default function Director() {
             <button type="submit" className="btn-primary">Create User</button>
           </form>
         </div>
-      </div>
+      )}
 
       <EmployeeTable employees={employees} onPasswordChange={handlePasswordChange} />
     </div>
