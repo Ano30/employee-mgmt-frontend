@@ -8,7 +8,7 @@ export default function HR() {
   const [locations, setLocations] = useState([]);
   const [supervisors, setSupervisors] = useState([]);
   const [message, setMessage] = useState("");
-  const [showAddForm, setShowAddForm] = useState(false); // Toggle form visibility
+  const [showAddForm, setShowAddForm] = useState(false); 
   const navigate = useNavigate();
   
   const token = localStorage.getItem("token");
@@ -28,7 +28,6 @@ export default function HR() {
 
   const fetchEmployees = async () => {
     try {
-      // HR uses the same endpoint as Director to see all employees
       const res = await axios.get("https://employee-mgmt-2ufc.onrender.com/api/director/all-employees", {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -50,10 +49,7 @@ export default function HR() {
   };
 
   const handleFindCoordinates = async () => {
-    if (!locForm.name) {
-      setMessage("Please type a location name first.");
-      return;
-    }
+    if (!locForm.name) return setMessage("Please type a location name first.");
     setMessage("Searching...");
     try {
       const response = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${locForm.name}`);
@@ -61,9 +57,7 @@ export default function HR() {
         const { lat, lon } = response.data[0];
         setLocForm({ ...locForm, latitude: lat, longitude: lon });
         setMessage("Coordinates found!");
-      } else {
-        setMessage("Location not found.");
-      }
+      } else setMessage("Location not found.");
     } catch (err) {
       setMessage("Error finding location.");
     }
@@ -72,12 +66,10 @@ export default function HR() {
   const handleAddLocation = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("https://employee-mgmt-2ufc.onrender.com/api/hr/locations", locForm, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.post("https://employee-mgmt-2ufc.onrender.com/api/hr/locations", locForm, { headers: { Authorization: `Bearer ${token}` } });
       setMessage("Location added successfully!");
       setLocForm({ name: "", latitude: "", longitude: "", radiusMeters: 100 });
-      fetchDropdowns(); // Refresh dropdowns
+      fetchDropdowns();
     } catch (err) {
       setMessage(err.response?.data?.error || "Failed to add location");
     }
@@ -86,13 +78,11 @@ export default function HR() {
   const handleAddEmployee = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("https://employee-mgmt-2ufc.onrender.com/api/hr/employees", empForm, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.post("https://employee-mgmt-2ufc.onrender.com/api/hr/employees", empForm, { headers: { Authorization: `Bearer ${token}` } });
       setMessage("Employee added successfully!");
       setEmpForm({ fullName: "", email: "", password: "", employeeCode: "", department: "", supervisorId: "", locationId: "" });
-      fetchEmployees(); // Refresh the list
-      setShowAddForm(false); // Hide the form after success
+      fetchEmployees();
+      setShowAddForm(false);
     } catch (err) {
       setMessage(err.response?.data?.error || "Failed to add employee");
     }
@@ -103,6 +93,26 @@ export default function HR() {
       { userId, newPassword }, 
       { headers: { Authorization: `Bearer ${token}` } }
     );
+  };
+
+  const handleEditUser = async (userId, updatedData) => {
+    await axios.put(`https://employee-mgmt-2ufc.onrender.com/api/director/users/${userId}`, {
+      fullName: updatedData.name,
+      email: updatedData.email,
+      role: updatedData.role,
+      supervisorId: updatedData.supervisorId,
+      locationId: updatedData.locationId
+    }, { headers: { Authorization: `Bearer ${token}` } });
+    fetchEmployees();
+  };
+
+  const handleDeleteUser = async (userId) => {
+    try {
+      await axios.delete(`https://employee-mgmt-2ufc.onrender.com/api/director/users/${userId}`, { headers: { Authorization: `Bearer ${token}` } });
+      fetchEmployees();
+    } catch (err) {
+      alert("Failed to delete user.");
+    }
   };
 
   return (
@@ -126,10 +136,8 @@ export default function HR() {
           <div className="card" style={{ flex: 1 }}>
             <h4 style={{ color: "var(--navy-blue)" }}>Add Work Location</h4>
             <form onSubmit={handleAddLocation} style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-              <input type="text" placeholder="Location Name (e.g. Eldoret)" value={locForm.name} onChange={(e) => setLocForm({...locForm, name: e.target.value})} required />
-              <button type="button" onClick={handleFindCoordinates} style={{ backgroundColor: "#ffc107", color: "black", fontWeight: "bold" }}>
-                ?? Find Coordinates
-              </button>
+              <input type="text" placeholder="Location Name" value={locForm.name} onChange={(e) => setLocForm({...locForm, name: e.target.value})} required />
+              <button type="button" onClick={handleFindCoordinates} style={{ backgroundColor: "#ffc107", color: "black", fontWeight: "bold" }}>?? Find Coordinates</button>
               <input type="number" step="any" placeholder="Latitude" value={locForm.latitude} onChange={(e) => setLocForm({...locForm, latitude: e.target.value})} required />
               <input type="number" step="any" placeholder="Longitude" value={locForm.longitude} onChange={(e) => setLocForm({...locForm, longitude: e.target.value})} required />
               <input type="number" placeholder="Radius (m)" value={locForm.radiusMeters} onChange={(e) => setLocForm({...locForm, radiusMeters: e.target.value})} required />
@@ -143,27 +151,32 @@ export default function HR() {
               <input type="text" placeholder="Full Name" value={empForm.fullName} onChange={(e) => setEmpForm({...empForm, fullName: e.target.value})} required />
               <input type="email" placeholder="Email" value={empForm.email} onChange={(e) => setEmpForm({...empForm, email: e.target.value})} required />
               <input type="password" placeholder="Password" value={empForm.password} onChange={(e) => setEmpForm({...empForm, password: e.target.value})} required />
-              <input type="text" placeholder="Employee Code (e.g. EMP001)" value={empForm.employeeCode} onChange={(e) => setEmpForm({...empForm, employeeCode: e.target.value})} required />
+              <input type="text" placeholder="Employee Code" value={empForm.employeeCode} onChange={(e) => setEmpForm({...empForm, employeeCode: e.target.value})} required />
               <input type="text" placeholder="Department" value={empForm.department} onChange={(e) => setEmpForm({...empForm, department: e.target.value})} required />
-              
               <select value={empForm.supervisorId} onChange={(e) => setEmpForm({...empForm, supervisorId: e.target.value})} required>
                 <option value="">Select Supervisor...</option>
                 {supervisors.map(sup => <option key={sup.id} value={sup.id}>{sup.fullName}</option>)}
               </select>
-
               <select value={empForm.locationId} onChange={(e) => setEmpForm({...empForm, locationId: e.target.value})} required>
                 <option value="">Select Work Location...</option>
                 {locations.map(loc => <option key={loc.id} value={loc.id}>{loc.name}</option>)}
               </select>
-              
               <button type="submit" className="btn-primary">Add Employee</button>
             </form>
           </div>
         </div>
       )}
 
-      {/* Reusable Employee Table Component */}
-      <EmployeeTable employees={employees} onPasswordChange={handlePasswordChange} />
+      {/* CRUCIAL UPDATE: Passing the role and actions */}
+      <EmployeeTable 
+        employees={employees} 
+        onPasswordChange={handlePasswordChange} 
+        onEdit={handleEditUser}
+        onDelete={handleDeleteUser}
+        supervisors={supervisors}
+        locations={locations}
+        currentUserRole="hr"
+      />
     </div>
   );
 }
