@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import EmployeeTable from "../components/EmployeeTable";
 
 export default function Supervisor() {
+  const [employees, setEmployees] = useState([]);
   const [leaves, setLeaves] = useState([]);
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
@@ -11,12 +13,23 @@ export default function Supervisor() {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   useEffect(() => {
-    if (!token || user.role !== "supervisor") {
-      navigate("/");
-    } else {
+    if (!token || user.role !== "supervisor") navigate("/");
+    else {
+      fetchMyTeam();
       fetchLeaves();
     }
   }, []);
+
+  const fetchMyTeam = async () => {
+    try {
+      const res = await axios.get("https://employee-mgmt-2ufc.onrender.com/api/supervisor/my-employees", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setEmployees(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const fetchLeaves = async () => {
     try {
@@ -29,7 +42,14 @@ export default function Supervisor() {
     }
   };
 
-  const handleAction = async (id, action) => {
+  const handlePasswordChange = async (userId, newPassword) => {
+    await axios.post("https://employee-mgmt-2ufc.onrender.com/api/supervisor/change-password", 
+      { userId, newPassword }, 
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+  };
+
+  const handleLeaveAction = async (id, action) => {
     setMessage("");
     try {
       if (action === "recall") {
@@ -49,30 +69,27 @@ export default function Supervisor() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate("/");
-  };
-
   return (
-    <div style={{ fontFamily: "Arial", padding: "20px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #ccc", paddingBottom: "10px" }}>
-        <h2>Supervisor Dashboard - Welcome, {user.fullName}</h2>
-        <button onClick={handleLogout} style={{ padding: "8px 15px", backgroundColor: "#dc3545", color: "white", border: "none", borderRadius: "5px", cursor: "pointer" }}>
-          Logout
-        </button>
+    <div style={{ padding: "20px", maxWidth: "1200px", margin: "0 auto" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", backgroundColor: "var(--navy-blue)", color: "white", padding: "15px", borderRadius: "8px", marginBottom: "20px" }}>
+        <h2>Supervisor Dashboard - {user.fullName}</h2>
+        <button onClick={() => { localStorage.clear(); navigate("/"); }} className="btn-danger">Logout</button>
       </div>
 
-      {message && <p style={{ color: message.includes("success") ? "green" : "red", fontWeight: "bold", marginTop: "10px" }}>{message}</p>}
+      {message && <p style={{ color: message.includes("success") ? "var(--green)" : "red", fontWeight: "bold" }}>{message}</p>}
 
-      <div style={{ marginTop: "20px", border: "1px solid #ccc", padding: "20px", borderRadius: "8px" }}>
-        <h3>Team Leave Requests</h3>
+      {/* 1. Assigned Employees Table (with Password Reset) */}
+      <EmployeeTable employees={employees} onPasswordChange={handlePasswordChange} />
+
+      {/* 2. Leave Requests Table */}
+      <div className="card" style={{ marginTop: "30px" }}>
+        <h3 style={{ color: "var(--navy-blue)" }}>Team Leave Requests</h3>
         {leaves.length === 0 ? (
           <p>No leave requests from your team.</p>
         ) : (
           <table style={{ width: "100%", textAlign: "left", borderCollapse: "collapse", marginTop: "10px" }}>
             <thead>
-              <tr style={{ borderBottom: "2px solid #ccc" }}>
+              <tr style={{ borderBottom: "2px solid var(--navy-blue)" }}>
                 <th>Employee</th>
                 <th>Type</th>
                 <th>Dates</th>
@@ -83,23 +100,23 @@ export default function Supervisor() {
             <tbody>
               {leaves.map((leave) => (
                 <tr key={leave.id} style={{ borderBottom: "1px solid #eee" }}>
-                  <td style={{ padding: "8px" }}>{leave.employee.user.fullName}</td>
-                  <td style={{ padding: "8px" }}>{leave.leaveType}</td>
-                  <td style={{ padding: "8px" }}>
+                  <td style={{ padding: "10px" }}>{leave.employee.user.fullName}</td>
+                  <td style={{ padding: "10px" }}>{leave.leaveType}</td>
+                  <td style={{ padding: "10px" }}>
                     {new Date(leave.startDate).toLocaleDateString()} - {new Date(leave.endDate).toLocaleDateString()}
                   </td>
-                  <td style={{ padding: "8px", fontWeight: "bold", color: leave.status === "approved" ? "green" : leave.status === "rejected" ? "red" : "orange" }}>
+                  <td style={{ padding: "10px", fontWeight: "bold", color: leave.status === "approved" ? "var(--green)" : leave.status === "rejected" ? "red" : "orange" }}>
                     {leave.status.toUpperCase()}
                   </td>
-                  <td style={{ padding: "8px", display: "flex", gap: "5px" }}>
+                  <td style={{ padding: "10px", display: "flex", gap: "5px" }}>
                     {leave.status === "pending" && (
                       <>
-                        <button onClick={() => handleAction(leave.id, "approved")} style={{ padding: "5px 10px", backgroundColor: "#28a745", color: "white", border: "none", borderRadius: "3px", cursor: "pointer" }}>Approve</button>
-                        <button onClick={() => handleAction(leave.id, "rejected")} style={{ padding: "5px 10px", backgroundColor: "#dc3545", color: "white", border: "none", borderRadius: "3px", cursor: "pointer" }}>Reject</button>
+                        <button onClick={() => handleLeaveAction(leave.id, "approved")} className="btn-primary" style={{ padding: "5px 10px" }}>Approve</button>
+                        <button onClick={() => handleLeaveAction(leave.id, "rejected")} className="btn-danger" style={{ padding: "5px 10px" }}>Reject</button>
                       </>
                     )}
                     {leave.status === "approved" && (
-                      <button onClick={() => handleAction(leave.id, "recall")} style={{ padding: "5px 10px", backgroundColor: "#ffc107", color: "black", border: "none", borderRadius: "3px", cursor: "pointer" }}>Recall</button>
+                      <button onClick={() => handleLeaveAction(leave.id, "recall")} style={{ padding: "5px 10px", backgroundColor: "#ffc107", color: "black", fontWeight: "bold", border: "none", borderRadius: "4px", cursor: "pointer" }}>Recall</button>
                     )}
                   </td>
                 </tr>
