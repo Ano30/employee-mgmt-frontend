@@ -29,9 +29,9 @@ export default function EmployeeTable({ employees, onPasswordChange }) {
             <tr style={{ borderBottom: "2px solid var(--navy-blue)" }}>
               <th>Name</th>
               <th>Role</th>
-              <th>Location</th>
               <th>Status</th>
               <th>Latest Clock-in</th>
+              <th>Location (GPS)</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -44,7 +44,6 @@ export default function EmployeeTable({ employees, onPasswordChange }) {
                 <tr key={emp.id} style={{ borderBottom: "1px solid #eee" }}>
                   <td style={{ padding: "10px", fontWeight: "bold" }}>{emp.user.fullName}</td>
                   <td style={{ padding: "10px" }}>{emp.user.role.toUpperCase()}</td>
-                  <td style={{ padding: "10px" }}>{emp.location?.name || "N/A"}</td>
                   <td style={{ padding: "10px", fontWeight: "bold", color: isOnLeave ? "orange" : "var(--green)" }}>
                     {isOnLeave ? "ON LEAVE" : "ACTIVE"}
                   </td>
@@ -52,8 +51,24 @@ export default function EmployeeTable({ employees, onPasswordChange }) {
                     {latestClock ? (
                       <span>
                         {latestClock.clockType.toUpperCase()} at {new Date(latestClock.clockedAt).toLocaleTimeString()}
+                        <br/>
+                        <span style={{ fontSize: "12px", color: latestClock.isWithinGeofence ? "var(--green)" : "red", fontWeight: "bold" }}>
+                          {latestClock.isWithinGeofence ? "? Inside Geofence" : "? Outside Geofence"}
+                        </span>
                       </span>
                     ) : "No clock-ins"}
+                  </td>
+                  <td style={{ padding: "10px" }}>
+                    {latestClock ? (
+                      <a 
+                        href={`https://www.google.com/maps?q=${latestClock.latitude},${latestClock.longitude}`} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        style={{ color: "var(--navy-blue)", fontWeight: "bold", textDecoration: "underline" }}
+                      >
+                        ?? View on Map
+                      </a>
+                    ) : "N/A"}
                   </td>
                   <td style={{ padding: "10px" }}>
                     <button 
