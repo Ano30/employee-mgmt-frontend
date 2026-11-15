@@ -5,9 +5,11 @@ import EmployeeTable from "../components/EmployeeTable";
 
 export default function Director() {
   const [employees, setEmployees] = useState([]);
+  const [supervisors, setSupervisors] = useState([]);
+  const [locations, setLocations] = useState([]);
   const [form, setForm] = useState({ fullName: "", email: "", password: "", role: "hr" });
   const [message, setMessage] = useState("");
-  const [showForm, setShowForm] = useState(false); // NEW: Toggle state
+  const [showForm, setShowForm] = useState(false);
   const navigate = useNavigate();
   
   const token = localStorage.getItem("token");
@@ -15,15 +17,19 @@ export default function Director() {
 
   useEffect(() => {
     if (!token || user.role !== "director") navigate("/");
-    else fetchEmployees();
+    else fetchAllData();
   }, []);
 
-  const fetchEmployees = async () => {
+  const fetchAllData = async () => {
     try {
-      const res = await axios.get("https://employee-mgmt-2ufc.onrender.com/api/director/all-employees", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setEmployees(res.data);
+      const empRes = await axios.get("https://employee-mgmt-2ufc.onrender.com/api/director/all-employees", { headers: { Authorization: `Bearer ${token}` } });
+      setEmployees(empRes.data);
+      
+      const supRes = await axios.get("https://employee-mgmt-2ufc.onrender.com/api/hr/supervisors", { headers: { Authorization: `Bearer ${token}` } });
+      setSupervisors(supRes.data);
+
+      const locRes = await axios.get("https://employee-mgmt-2ufc.onrender.com/api/hr/locations", { headers: { Authorization: `Bearer ${token}` } });
+      setLocations(locRes.data);
     } catch (err) {
       console.error(err);
     }
@@ -33,23 +39,38 @@ export default function Director() {
     e.preventDefault();
     setMessage("");
     try {
-      await axios.post("https://employee-mgmt-2ufc.onrender.com/api/director/users", form, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.post("https://employee-mgmt-2ufc.onrender.com/api/director/users", form, { headers: { Authorization: `Bearer ${token}` } });
       setMessage("User created successfully!");
       setForm({ fullName: "", email: "", password: "", role: "hr" });
-      fetchEmployees();
-      setShowForm(false); // Hide form after success
+      fetchAllData();
+      setShowForm(false);
     } catch (err) {
       setMessage(err.response?.data?.error || "Failed to create user");
     }
   };
 
   const handlePasswordChange = async (userId, newPassword) => {
-    await axios.post("https://employee-mgmt-2ufc.onrender.com/api/director/change-password", 
-      { userId, newPassword }, 
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    await axios.post("https://employee-mgmt-2ufc.onrender.com/api/director/change-password", { userId, newPassword }, { headers: { Authorization: `Bearer ${token}` } });
+  };
+
+  const handleEditUser = async (userId, updatedData) => {
+    await axios.put(`https://employee-mgmt-2ufc.onrender.com/api/director/users/${userId}`, {
+      fullName: updatedData.name,
+      email: updatedData.email,
+      role: updatedData.role,
+      supervisorId: updatedData.supervisorId,
+      locationId: updatedData.locationId
+    }, { headers: { Authorization: `Bearer ${token}` } });
+    fetchAllData();
+  };
+
+  const handleDeleteUser = async (userId) => {
+    try {
+      await axios.delete(`https://employee-mgmt-2ufc.onrender.com/api/director/users/${userId}`, { headers: { Authorization: `Bearer ${token}` } });
+      fetchAllData();
+    } catch (err) {
+      alert("Failed to delete user.");
+    }
   };
 
   return (
@@ -62,7 +83,7 @@ export default function Director() {
       {message && <p style={{ color: message.includes("success") ? "var(--green)" : "red", fontWeight: "bold" }}>{message}</p>}
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
-        <h3 style={{ color: "var(--navy-blue)", margin: 0 }}>Employee Directory</h3>
+        <h3 style={{ color: "var(--navy-blue)", margin: 0 }}>Company Directory</h3>
         <button onClick={() => setShowForm(!showForm)} className="btn-primary">
           {showForm ? "Close Form" : "+ Create User"}
         </button>
@@ -84,7 +105,15 @@ export default function Director() {
         </div>
       )}
 
-      <EmployeeTable employees={employees} onPasswordChange={handlePasswordChange} />
+      <EmployeeTable 
+        employees={employees} 
+        onPasswordChange={handlePasswordChange} 
+        onEdit={handleEditUser}
+        onDelete={handleDeleteUser}
+        supervisors={supervisors}
+        locations={locations}
+        currentUserRole="director"
+      />
     </div>
   );
 }
