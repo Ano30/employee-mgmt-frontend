@@ -113,7 +113,9 @@ export default function Director() {
         supervisors={supervisors}
         locations={locations}
         currentUserRole="director"
+        currentUserId={user.id}
       />
     </div>
   );
 }
+

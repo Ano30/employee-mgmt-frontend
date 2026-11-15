@@ -176,7 +176,9 @@ export default function HR() {
         supervisors={supervisors}
         locations={locations}
         currentUserRole="hr"
+        currentUserId={user.id}
       />
     </div>
   );
 }
+

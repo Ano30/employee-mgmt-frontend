@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-export default function EmployeeTable({ employees, onPasswordChange, onEdit, onDelete, supervisors, locations, currentUserRole }) {
+export default function EmployeeTable({ employees, onPasswordChange, onEdit, onDelete, supervisors, locations, currentUserRole, currentUserId }) {
   const [selectedUser, setSelectedUser] = useState(null);
   const [editUser, setEditUser] = useState(null);
   const [newPassword, setNewPassword] = useState("");
@@ -25,7 +25,7 @@ export default function EmployeeTable({ employees, onPasswordChange, onEdit, onD
       setNewPassword("");
       setTimeout(() => { setSelectedUser(null); setMessage(""); }, 2000);
     } catch (err) {
-      setMessage("Failed to update password.");
+      setMessage(err.response?.data?.error || "Failed to update password.");
     }
   };
 
@@ -35,7 +35,7 @@ export default function EmployeeTable({ employees, onPasswordChange, onEdit, onD
       await onEdit(editUser.userId, editUser);
       setEditUser(null);
     } catch (err) {
-      alert("Failed to update user.");
+      alert(err.response?.data?.error || "Failed to update user.");
     }
   };
 
@@ -93,51 +93,56 @@ export default function EmployeeTable({ employees, onPasswordChange, onEdit, onD
               </tr>
             </thead>
             <tbody>
-              {filteredEmployees.map((emp) => (
-                <tr key={emp.userId} style={{ borderBottom: "1px solid #eee" }}>
-                  <td style={{ padding: "10px", fontWeight: "bold" }}>{emp.name}</td>
-                  <td style={{ padding: "10px" }}>{emp.role.toUpperCase()}</td>
-                  <td style={{ padding: "10px" }}>{emp.location}</td>
-                  <td style={{ padding: "10px", fontWeight: "bold", color: emp.isOnLeave ? "orange" : "var(--green)" }}>
-                    {emp.isOnLeave ? "ON LEAVE" : "ACTIVE"}
-                  </td>
-                  <td style={{ padding: "10px" }}>
-                    {emp.latestClock ? (
-                      <span>
-                        {emp.latestClock.clockType.toUpperCase()} at {new Date(emp.latestClock.clockedAt).toLocaleTimeString()}
-                        <br/>
-                        <span style={{ fontSize: "12px", color: emp.latestClock.isWithinGeofence ? "var(--green)" : "red", fontWeight: "bold" }}>
-                          {emp.latestClock.isWithinGeofence ? "? Inside" : "? Outside"}
+              {filteredEmployees.map((emp) => {
+                // Hide actions for Developers and for the currently logged-in user
+                const isProtected = emp.role === "developer" || emp.userId === currentUserId;
+                
+                return (
+                  <tr key={emp.userId} style={{ borderBottom: "1px solid #eee", backgroundColor: isProtected ? "#fafafa" : "transparent" }}>
+                    <td style={{ padding: "10px", fontWeight: "bold" }}>{emp.name}</td>
+                    <td style={{ padding: "10px" }}>{emp.role.toUpperCase()}</td>
+                    <td style={{ padding: "10px" }}>{emp.location}</td>
+                    <td style={{ padding: "10px", fontWeight: "bold", color: emp.isOnLeave ? "orange" : "var(--green)" }}>
+                      {emp.isOnLeave ? "ON LEAVE" : "ACTIVE"}
+                    </td>
+                    <td style={{ padding: "10px" }}>
+                      {emp.latestClock ? (
+                        <span>
+                          {emp.latestClock.clockType.toUpperCase()} at {new Date(emp.latestClock.clockedAt).toLocaleTimeString()}
+                          <br/>
+                          <span style={{ fontSize: "12px", color: emp.latestClock.isWithinGeofence ? "var(--green)" : "red", fontWeight: "bold" }}>
+                            {emp.latestClock.isWithinGeofence ? "? Inside" : "? Outside"}
+                          </span>
                         </span>
-                      </span>
-                    ) : "No clock-ins"}
-                  </td>
-                  <td style={{ padding: "10px" }}>
-                    {emp.latestClock ? (
-                      <a href={`https://www.google.com/maps?q=${emp.latestClock.latitude},${emp.latestClock.longitude}`} target="_blank" rel="noreferrer" style={{ color: "var(--navy-blue)", fontWeight: "bold" }}>
-                        ?? Map
-                      </a>
-                    ) : "N/A"}
-                  </td>
-                  <td style={{ padding: "10px", display: "flex", gap: "5px", flexWrap: "wrap" }}>
-                    <button onClick={() => setSelectedUser(emp.userId)} className="btn-navy" style={{ padding: "5px 10px", fontSize: "12px" }}>
-                      ?? Password
-                    </button>
-                    
-                    {/* Show Edit/Delete ONLY if the logged in user is HR or Director */}
-                    {(currentUserRole === "director" || currentUserRole === "hr") && (
-                      <>
-                        <button onClick={() => setEditUser(emp)} className="btn-primary" style={{ padding: "5px 10px", fontSize: "12px" }}>
-                          ?? Edit
-                        </button>
-                        <button onClick={() => { if(window.confirm("Deactivate this user? They will no longer be able to log in.")) onDelete(emp.userId) }} className="btn-danger" style={{ padding: "5px 10px", fontSize: "12px" }}>
-                          ??? Delete
-                        </button>
-                      </>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                      ) : "No clock-ins"}
+                    </td>
+                    <td style={{ padding: "10px" }}>
+                      {emp.latestClock ? (
+                        <a href={`https://www.google.com/maps?q=${emp.latestClock.latitude},${emp.latestClock.longitude}`} target="_blank" rel="noreferrer" style={{ color: "var(--navy-blue)", fontWeight: "bold" }}>
+                          ?? Map
+                        </a>
+                      ) : "N/A"}
+                    </td>
+                    <td style={{ padding: "10px", display: "flex", gap: "5px", flexWrap: "wrap" }}>
+                      {!isProtected ? (
+                        <>
+                          <button onClick={() => setSelectedUser(emp.userId)} className="btn-navy" style={{ padding: "5px 10px", fontSize: "12px" }}>
+                            ?? Password
+                          </button>
+                          <button onClick={() => setEditUser(emp)} className="btn-primary" style={{ padding: "5px 10px", fontSize: "12px" }}>
+                            ?? Edit
+                          </button>
+                          <button onClick={() => { if(window.confirm("Deactivate this user? They will no longer be able to log in.")) onDelete(emp.userId) }} className="btn-danger" style={{ padding: "5px 10px", fontSize: "12px" }}>
+                            ??? Delete
+                          </button>
+                        </>
+                      ) : (
+                        <span style={{ color: "gray", fontSize: "12px", fontStyle: "italic" }}>Protected</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
