@@ -4,6 +4,9 @@ export default function EmployeeTable({ employees, onPasswordChange }) {
   const [selectedUser, setSelectedUser] = useState(null);
   const [newPassword, setNewPassword] = useState("");
   const [message, setMessage] = useState("");
+  
+  // NEW: State for the filter
+  const [filterType, setFilterType] = useState("all");
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
@@ -17,12 +20,39 @@ export default function EmployeeTable({ employees, onPasswordChange }) {
     }
   };
 
+  // NEW: Filter Logic
+  const filteredEmployees = employees.filter((emp) => {
+    if (filterType === "all") return true;
+    if (filterType === "inside") return emp.latestClock?.isWithinGeofence === true;
+    if (filterType === "outside") return emp.latestClock?.isWithinGeofence === false;
+    if (filterType === "on_leave") return emp.isOnLeave === true;
+    if (filterType === "supervisors") return emp.role === "supervisor";
+    if (filterType === "hr") return emp.role === "hr";
+    return true;
+  });
+
   return (
     <div className="card">
-      <h3 style={{ color: "var(--navy-blue)" }}>Company Directory</h3>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
+        <h3 style={{ color: "var(--navy-blue)", margin: 0 }}>Company Directory</h3>
+        
+        {/* NEW: Filter Dropdown */}
+        <select 
+          value={filterType} 
+          onChange={(e) => setFilterType(e.target.value)}
+          style={{ width: "auto", marginBottom: 0, padding: "8px 15px", fontWeight: "bold", borderColor: "var(--navy-blue)" }}
+        >
+          <option value="all">Show: All Users</option>
+          <option value="inside">?? Clocked Inside Location</option>
+          <option value="outside">? Clocked Outside Location</option>
+          <option value="on_leave">?? Currently On Leave</option>
+          <option value="supervisors">?? Supervisors Only</option>
+          <option value="hr">?? HR Only</option>
+        </select>
+      </div>
       
-      {employees.length === 0 ? (
-        <p>No employees found.</p>
+      {filteredEmployees.length === 0 ? (
+        <p>No employees match this filter.</p>
       ) : (
         <table style={{ width: "100%", textAlign: "left", borderCollapse: "collapse", marginTop: "10px" }}>
           <thead>
@@ -36,7 +66,7 @@ export default function EmployeeTable({ employees, onPasswordChange }) {
             </tr>
           </thead>
           <tbody>
-            {employees.map((emp) => {
+            {filteredEmployees.map((emp) => {
               const isOnLeave = emp.isOnLeave;
               const latestClock = emp.latestClock;
               
@@ -86,6 +116,7 @@ export default function EmployeeTable({ employees, onPasswordChange }) {
         </table>
       )}
 
+      {/* Password Reset Modal */}
       {selectedUser && (
         <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 }}>
           <div className="card" style={{ width: "300px", backgroundColor: "white" }}>
