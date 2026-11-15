@@ -1,29 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("employee");
-  const [companyName, setCompanyName] = useState("");
-  const [companies, setCompanies] = useState([]);
+  const [role, setRole] = useState("director");
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-
-  // Fetch companies when the page loads
-  useEffect(() => {
-    const fetchCompanies = async () => {
-      try {
-        const res = await axios.get("https://employee-mgmt-2ufc.onrender.com/api/developer/companies/public");
-        setCompanies(res.data);
-      } catch (err) {
-        console.error("Could not fetch companies");
-      }
-    };
-    fetchCompanies();
-  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -31,8 +16,9 @@ export default function Login() {
 
     try {
       const response = await axios.post("https://employee-mgmt-2ufc.onrender.com/api/auth/login", { 
-        email, password, role, companyName 
+        email, password, role 
       });
+      
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("user", JSON.stringify(response.data.user));
 
@@ -54,22 +40,13 @@ export default function Login() {
         {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
         
         <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-          <select value={role} onChange={(e) => { setRole(e.target.value); if(e.target.value === "developer") setCompanyName(""); }}>
+          <select value={role} onChange={(e) => setRole(e.target.value)}>
             <option value="developer">Developer</option>
             <option value="director">Director</option>
             <option value="hr">HR</option>
             <option value="supervisor">Supervisor</option>
             <option value="employee">Employee</option>
           </select>
-
-          {role !== "developer" && (
-            <select value={companyName} onChange={(e) => setCompanyName(e.target.value)} required>
-              <option value="">Select Company...</option>
-              {companies.map(c => (
-                <option key={c.id} value={c.name}>{c.name}</option>
-              ))}
-            </select>
-          )}
           
           <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           
