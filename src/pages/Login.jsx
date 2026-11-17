@@ -8,6 +8,7 @@ export default function Login() {
   const [role, setRole] = useState("director");
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showTerms, setShowTerms] = useState(false); // State for Terms Modal
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -34,8 +35,9 @@ export default function Login() {
   };
 
   return (
-    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-      <div className="card" style={{ width: "100%", maxWidth: "400px" }}>
+    <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+      
+      <div className="card" style={{ width: "100%", maxWidth: "400px", paddingBottom: "20px" }}>
         <h2 style={{ textAlign: "center", color: "var(--navy-blue)" }}>Employee Login</h2>
         {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
         
@@ -69,7 +71,43 @@ export default function Login() {
 
           <button type="submit" className="btn-navy" style={{ width: "100%", marginTop: "10px" }}>Login</button>
         </form>
+
+        {/* TERMS & CONDITIONS TOGGLE */}
+        <div style={{ textAlign: "center", marginTop: "15px", fontSize: "12px" }}>
+          <span style={{ color: "var(--navy-blue)", cursor: "pointer", textDecoration: "underline" }} onClick={() => setShowTerms(true)}>
+            Terms & Conditions
+          </span>
+        </div>
       </div>
+
+      {/* FOOTER WITH CONTACT INFO */}
+      <div style={{ marginTop: "20px", textAlign: "center", fontSize: "14px", color: "#555" }}>
+        <p style={{ margin: "5px 0" }}>?? support@yourcompany.com</p>
+        <p style={{ margin: "5px 0" }}>?? +254 700 000 000</p>
+      </div>
+
+      {/* TERMS MODAL POPUP */}
+      {showTerms && (
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000, padding: "20px" }}>
+          <div className="card" style={{ width: "100%", maxWidth: "500px", maxHeight: "80vh", overflowY: "auto", backgroundColor: "white" }}>
+            <h3 style={{ color: "var(--navy-blue)" }}>Terms and Conditions</h3>
+            <hr style={{ margin: "10px 0" }}/>
+            <p style={{ fontSize: "14px", lineHeight: "1.6" }}>
+              Welcome to the Employee Management System. By logging in, you agree to the following terms:
+            </p>
+            <ul style={{ fontSize: "14px", lineHeight: "1.6", paddingLeft: "20px" }}>
+              <li>You will not share your login credentials with anyone.</li>
+              <li>GPS location will be recorded during clock-in for attendance verification.</li>
+              <li>False clock-ins or manipulating location data will result in disciplinary action.</li>
+              <li>Personal data is strictly used for HR and company management purposes.</li>
+              <li>Leave requests must be submitted in advance and approved by your supervisor.</li>
+            </ul>
+            <button onClick={() => setShowTerms(false)} className="btn-navy" style={{ width: "100%", marginTop: "20px" }}>
+              Close and I Agree
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
