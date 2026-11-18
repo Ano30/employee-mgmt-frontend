@@ -11,11 +11,26 @@ export default function EmployeeTable({ employees, onPasswordChange, onEdit, onD
   const [filterLocation, setFilterLocation] = useState("all");
   const [filterRole, setFilterRole] = useState("all");
 
+  // 1. Filter unique locations for the filter bar
   const [uniqueLocations, setUniqueLocations] = useState([]);
   useEffect(() => {
     const locs = [...new Set(employees.map(emp => emp.location))];
     setUniqueLocations(locs.filter(loc => loc !== "N/A"));
   }, [employees]);
+
+  // 2. Filter unique locations for the Edit Dropdown
+  const [uniqueDropdownLocations, setUniqueDropdownLocations] = useState([]);
+  useEffect(() => {
+    if (locations) {
+      const seen = new Set();
+      const filtered = locations.filter(loc => {
+        const duplicate = seen.has(loc.name.toLowerCase());
+        seen.add(loc.name.toLowerCase());
+        return !duplicate;
+      });
+      setUniqueDropdownLocations(filtered);
+    }
+  }, [locations]);
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
@@ -57,7 +72,6 @@ export default function EmployeeTable({ employees, onPasswordChange, onEdit, onD
     <div className="card">
       <h3 style={{ color: "var(--navy-blue)", marginBottom: "15px" }}>Company Directory</h3>
       
-      {/* FILTER BAR */}
       <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "20px", backgroundColor: "#f8f9fa", padding: "15px", borderRadius: "8px", border: "1px solid #e9ecef" }}>
         <input type="text" placeholder="?? Search by Name..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ flex: "1 1 200px", marginBottom: 0 }} />
         <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} style={{ flex: "1 1 150px", marginBottom: 0 }}>
@@ -79,7 +93,6 @@ export default function EmployeeTable({ employees, onPasswordChange, onEdit, onD
         </select>
       </div>
 
-      {/* TABLE */}
       <div style={{ overflowX: "auto" }}>
         {filteredEmployees.length === 0 ? <p>No employees match your filters.</p> : (
           <table style={{ width: "100%", textAlign: "left", borderCollapse: "collapse", minWidth: "900px" }}>
@@ -149,7 +162,6 @@ export default function EmployeeTable({ employees, onPasswordChange, onEdit, onD
         )}
       </div>
 
-      {/* EDIT USER MODAL - UPDATED FOR HR TO EDIT EVERYTHING */}
       {editUser && (
         <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 }}>
           <div className="card" style={{ width: "400px", backgroundColor: "white", maxHeight: "90vh", overflowY: "auto" }}>
@@ -173,7 +185,9 @@ export default function EmployeeTable({ employees, onPasswordChange, onEdit, onD
                   <label style={{ fontSize: "12px", color: "#555", marginBottom: "-5px" }}>Assigned Work Location:</label>
                   <select value={editUser.locationId || ""} onChange={(e) => setEditUser({...editUser, locationId: e.target.value})} required>
                     <option value="">Select Location...</option>
-                    {locations?.map(loc => <option key={loc.id} value={loc.id}>{loc.name}</option>)}
+                    {uniqueDropdownLocations.map(loc => (
+                      <option key={loc.id} value={loc.id}>{loc.name}</option>
+                    ))}
                   </select>
                 </>
               )}
@@ -187,7 +201,6 @@ export default function EmployeeTable({ employees, onPasswordChange, onEdit, onD
         </div>
       )}
 
-      {/* PASSWORD RESET MODAL */}
       {selectedUser && (
         <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 }}>
           <div className="card" style={{ width: "300px", backgroundColor: "white" }}>
