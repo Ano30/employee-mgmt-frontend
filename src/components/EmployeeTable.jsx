@@ -11,14 +11,12 @@ export default function EmployeeTable({ employees, onPasswordChange, onEdit, onD
   const [filterLocation, setFilterLocation] = useState("all");
   const [filterRole, setFilterRole] = useState("all");
 
-  // 1. Filter unique locations for the filter bar
   const [uniqueLocations, setUniqueLocations] = useState([]);
   useEffect(() => {
     const locs = [...new Set(employees.map(emp => emp.location))];
     setUniqueLocations(locs.filter(loc => loc !== "N/A"));
   }, [employees]);
 
-  // 2. Filter unique locations for the Edit Dropdown
   const [uniqueDropdownLocations, setUniqueDropdownLocations] = useState([]);
   useEffect(() => {
     if (locations) {
@@ -146,7 +144,7 @@ export default function EmployeeTable({ employees, onPasswordChange, onEdit, onD
                           <button onClick={() => setEditUser(emp)} className="btn-primary" style={{ padding: "5px 10px", fontSize: "12px" }}>
                             ?? Edit
                           </button>
-                          <button onClick={() => { if(window.confirm("Deactivate this user? They will no longer be able to log in.")) onDelete(emp.userId) }} className="btn-danger" style={{ padding: "5px 10px", fontSize: "12px" }}>
+                          <button onClick={() => { if(window.confirm("WARNING: Are you sure you want to PERMANENTLY DELETE this user? All their clock-in and leave history will be erased forever.")) onDelete(emp.userId) }} className="btn-danger" style={{ padding: "5px 10px", fontSize: "12px" }}>
                             ??? Delete
                           </button>
                         </>
@@ -173,6 +171,13 @@ export default function EmployeeTable({ employees, onPasswordChange, onEdit, onD
               
               <label style={{ fontSize: "12px", color: "#555", marginBottom: "-5px" }}>Email Address:</label>
               <input type="email" value={editUser.email} onChange={(e) => setEditUser({...editUser, email: e.target.value})} required />
+
+              <label style={{ fontSize: "12px", color: "#555", marginBottom: "-5px" }}>User Role (Promote/Demote):</label>
+              <select value={editUser.role} onChange={(e) => setEditUser({...editUser, role: e.target.value})} required>
+                <option value="employee">Employee</option>
+                <option value="supervisor">Supervisor</option>
+                <option value="hr">HR Manager</option>
+              </select>
               
               {editUser.role === "employee" && (
                 <>
