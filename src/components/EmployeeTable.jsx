@@ -57,6 +57,7 @@ export default function EmployeeTable({ employees, onPasswordChange, onEdit, onD
     <div className="card">
       <h3 style={{ color: "var(--navy-blue)", marginBottom: "15px" }}>Company Directory</h3>
       
+      {/* FILTER BAR */}
       <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "20px", backgroundColor: "#f8f9fa", padding: "15px", borderRadius: "8px", border: "1px solid #e9ecef" }}>
         <input type="text" placeholder="?? Search by Name..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ flex: "1 1 200px", marginBottom: 0 }} />
         <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} style={{ flex: "1 1 150px", marginBottom: 0 }}>
@@ -78,6 +79,7 @@ export default function EmployeeTable({ employees, onPasswordChange, onEdit, onD
         </select>
       </div>
 
+      {/* TABLE */}
       <div style={{ overflowX: "auto" }}>
         {filteredEmployees.length === 0 ? <p>No employees match your filters.</p> : (
           <table style={{ width: "100%", textAlign: "left", borderCollapse: "collapse", minWidth: "900px" }}>
@@ -94,7 +96,6 @@ export default function EmployeeTable({ employees, onPasswordChange, onEdit, onD
             </thead>
             <tbody>
               {filteredEmployees.map((emp) => {
-                // Hide actions for Developers and for the currently logged-in user
                 const isProtected = emp.role === "developer" || emp.userId === currentUserId;
                 
                 return (
@@ -148,29 +149,36 @@ export default function EmployeeTable({ employees, onPasswordChange, onEdit, onD
         )}
       </div>
 
-      {/* Edit User Modal */}
+      {/* EDIT USER MODAL - UPDATED FOR HR TO EDIT EVERYTHING */}
       {editUser && (
         <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 }}>
-          <div className="card" style={{ width: "400px", backgroundColor: "white" }}>
+          <div className="card" style={{ width: "400px", backgroundColor: "white", maxHeight: "90vh", overflowY: "auto" }}>
             <h3 style={{ color: "var(--navy-blue)" }}>Edit User</h3>
             <form onSubmit={handleEditSubmit} style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-              <input type="text" placeholder="Full Name" value={editUser.name} onChange={(e) => setEditUser({...editUser, name: e.target.value})} required />
-              <input type="email" placeholder="Email" value={editUser.email} onChange={(e) => setEditUser({...editUser, email: e.target.value})} required />
+              
+              <label style={{ fontSize: "12px", color: "#555", marginBottom: "-5px" }}>Full Name:</label>
+              <input type="text" value={editUser.name} onChange={(e) => setEditUser({...editUser, name: e.target.value})} required />
+              
+              <label style={{ fontSize: "12px", color: "#555", marginBottom: "-5px" }}>Email Address:</label>
+              <input type="email" value={editUser.email} onChange={(e) => setEditUser({...editUser, email: e.target.value})} required />
               
               {editUser.role === "employee" && (
                 <>
-                  <select value={editUser.supervisorId} onChange={(e) => setEditUser({...editUser, supervisorId: e.target.value})} required>
+                  <label style={{ fontSize: "12px", color: "#555", marginBottom: "-5px" }}>Assigned Supervisor:</label>
+                  <select value={editUser.supervisorId || ""} onChange={(e) => setEditUser({...editUser, supervisorId: e.target.value})} required>
                     <option value="">Select Supervisor...</option>
                     {supervisors?.map(sup => <option key={sup.id} value={sup.id}>{sup.fullName}</option>)}
                   </select>
-                  <select value={editUser.locationId} onChange={(e) => setEditUser({...editUser, locationId: e.target.value})} required>
+                  
+                  <label style={{ fontSize: "12px", color: "#555", marginBottom: "-5px" }}>Assigned Work Location:</label>
+                  <select value={editUser.locationId || ""} onChange={(e) => setEditUser({...editUser, locationId: e.target.value})} required>
                     <option value="">Select Location...</option>
                     {locations?.map(loc => <option key={loc.id} value={loc.id}>{loc.name}</option>)}
                   </select>
                 </>
               )}
 
-              <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+              <div style={{ display: "flex", gap: "10px", marginTop: "15px" }}>
                 <button type="submit" className="btn-primary" style={{ flex: 1 }}>Save Changes</button>
                 <button type="button" onClick={() => setEditUser(null)} className="btn-danger" style={{ flex: 1 }}>Cancel</button>
               </div>
@@ -179,7 +187,7 @@ export default function EmployeeTable({ employees, onPasswordChange, onEdit, onD
         </div>
       )}
 
-      {/* Password Reset Modal */}
+      {/* PASSWORD RESET MODAL */}
       {selectedUser && (
         <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 }}>
           <div className="card" style={{ width: "300px", backgroundColor: "white" }}>
